@@ -978,7 +978,12 @@
         "name": "[variables('trafficMgr')]",
         "location": "global",
         "dependsOn": [
-
+          "[variables('westIpId')]",
+          "[variables('westGwId')]",
+          "[variables('centralIpId')]",
+          "[variables('centralGwId')]",
+          "[variables('eastIpId')]",
+          "[variables('eastGwId')]"
         ],
         "properties": {
           "profileStatus": "Enabled",
