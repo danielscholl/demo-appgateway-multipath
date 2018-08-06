@@ -2,7 +2,7 @@
 
 This proof of concept implements a 3 region multi path website controlled by Traffic Manager to route traffic to the proper location. 
 
-__Deploy the Demo:__
+__Deploy the Solution:__
 
 Includes a template and links web deployment to github.
 
