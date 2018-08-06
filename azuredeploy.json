@@ -1,0 +1,952 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "prefix": {
+          "type": "string",
+          "metadata": {
+              "description": "Small unique string."
+          },
+          "minLength": 2,
+          "maxLength": 5
+      }
+    },
+    "variables": {
+      "westStorage": "[concat(parameters('prefix'), 'diagwest')]",
+      "centralStorage": "[concat(parameters('prefix'), 'diagcentral')]",
+      "eastStorage": "[concat(parameters('prefix'), 'diageast')]",
+      "westPlan": "[concat(parameters('prefix'), '-plan-west')]",
+      "centralPlan": "[concat(parameters('prefix'), '-plan-central')]",
+      "eastPlan": "[concat(parameters('prefix'), '-plan-east')]",     
+      "westWeb": "[concat(parameters('prefix'), '-web-west')]",
+      "centralWeb": "[concat(parameters('prefix'), '-web-central')]",
+      "eastWeb": "[concat(parameters('prefix'), '-web-east')]",
+      "westApi": "[concat(parameters('prefix'), '-api-west')]",
+      "centralApi": "[concat(parameters('prefix'), '-api-central')]",
+      "eastApi": "[concat(parameters('prefix'), '-api-east')]",
+      "westIp": "[concat(parameters('prefix'), '-ip-west')]",
+      "westIpId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('westIp'))]",
+      "centralIp": "[concat(parameters('prefix'), '-ip-central')]",
+      "centralIpId": "[resourceId('Microsoft.Network/publicIPAddresses' ,variables('centralIp'))]",
+      "eastIp": "[concat(parameters('prefix'), '-ip-east')]",
+      "eastIpId": "[resourceId('Microsoft.Network/publicIPAddresses' ,variables('eastIp'))]",
+      "westVnet": "[concat(parameters('prefix'), '-vnet-west')]",
+      "westSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('westVnet'), 'default')]",
+      "centralVnet": "[concat(parameters('prefix'), '-vnet-central')]",
+      "centralSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('centralVnet'), 'default')]",
+      "eastVnet": "[concat(parameters('prefix'), '-vnet-east')]",
+      "eastSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('eastVnet'), 'default')]",
+      "westGw": "[concat(parameters('prefix'), '-gw-west')]",
+      "westGwId": "[resourceId('Microsoft.Network/applicationGateways',variables('westGw'))]",
+      "centralGw": "[concat(parameters('prefix'), '-gw-central')]",
+      "centralGwId": "[resourceId('Microsoft.Network/applicationGateways',variables('centralGw'))]",
+      "eastGw": "[concat(parameters('prefix'), '-gw-east')]",
+      "eastGwId": "[resourceId('Microsoft.Network/applicationGateways',variables('eastGw'))]"
+    },
+    "resources": [
+      {
+        "apiVersion": "2018-03-01-preview",
+        "name": "[variables('westStorage')]",
+        "type": "Microsoft.Storage/storageAccounts",
+        "location": "westus",
+        "tags": {
+          "displayName": "Storage Account"
+        },
+        "kind": "StorageV2",
+        "sku": {
+          "name": "Standard_LRS",
+          "tier": "Standard"
+        },
+        "properties": {
+          "encryption": {
+            "keySource": "Microsoft.Storage",
+            "services": {
+              "blob": {
+                "enabled": true
+              }
+            }
+          },
+          "accessTier": "Hot"
+        }
+      },
+      {
+        "apiVersion": "2018-03-01-preview",
+        "name": "[variables('centralStorage')]",
+        "type": "Microsoft.Storage/storageAccounts",
+        "location": "centralus",
+        "tags": {
+          "displayName": "Storage Account"
+        },
+        "kind": "StorageV2",
+        "sku": {
+          "name": "Standard_LRS",
+          "tier": "Standard"
+        },
+        "properties": {
+          "encryption": {
+            "keySource": "Microsoft.Storage",
+            "services": {
+              "blob": {
+                "enabled": true
+              }
+            }
+          },
+          "accessTier": "Hot"
+        }
+      },
+      {
+        "apiVersion": "2018-03-01-preview",
+        "name": "[variables('eastStorage')]",
+        "type": "Microsoft.Storage/storageAccounts",
+        "location": "eastus",
+        "tags": {
+          "displayName": "Storage Account"
+        },
+        "kind": "StorageV2",
+        "sku": {
+          "name": "Standard_LRS",
+          "tier": "Standard"
+        },
+        "properties": {
+          "encryption": {
+            "keySource": "Microsoft.Storage",
+            "services": {
+              "blob": {
+                "enabled": true
+              }
+            }
+          },
+          "accessTier": "Hot"
+        }
+      },
+      {
+        "apiVersion": "2016-09-01",
+        "name": "[variables('westPlan')]",
+        "type": "Microsoft.Web/serverfarms",
+        "kind": "app",
+        "location": "westus",
+        "sku": {
+            "name": "B1"
+        },
+        "properties": {}
+      },
+      {
+        "apiVersion": "2016-09-01",
+        "name": "[variables('centralPlan')]",
+        "type": "Microsoft.Web/serverfarms",
+        "kind": "app",
+        "location": "centralus",
+        "sku": {
+            "name": "B1"
+        },
+        "properties": {}
+      },
+      {
+        "apiVersion": "2016-09-01",
+        "name": "[variables('eastPlan')]",
+        "type": "Microsoft.Web/serverfarms",
+        "kind": "app",
+        "location": "eastus",
+        "sku": {
+            "name": "B1"
+        },
+        "properties": {}
+      },
+      {
+        "apiVersion": "2016-08-01",
+        "type": "Microsoft.Web/sites",
+        "name": "[variables('westWeb')]",
+        "dependsOn": [
+            "[variables('westPlan')]"
+        ],
+        "location": "westus",
+        "properties": {
+            "name": "[variables('westWeb')]",
+            "serverFarmId": "[variables('westPlan')]"
+        },
+        "resources": [
+          {
+            "apiVersion": "2016-08-01",
+            "name": "web",
+            "type": "sourcecontrols",
+            "dependsOn": [
+              "[resourceId('Microsoft.Web/Sites', variables('westWeb'))]"
+            ],
+            "properties": {
+              "RepoUrl": "https://github.com/danielscholl/demo-appgw-path-code.git",
+              "branch": "master",
+              "IsManualIntegration": true
+            }
+          }
+        ]
+      },
+      {
+        "apiVersion": "2016-08-01",
+        "type": "Microsoft.Web/sites",
+        "name": "[variables('westApi')]",
+        "dependsOn": [
+            "[variables('westPlan')]"
+        ],
+        "location": "westus",
+        "properties": {
+            "name": "[variables('westApi')]",
+            "serverFarmId": "[variables('westPlan')]"
+        },
+        "resources": [
+          {
+            "apiVersion": "2016-08-01",
+            "name": "web",
+            "type": "sourcecontrols",
+            "dependsOn": [
+              "[resourceId('Microsoft.Web/Sites', variables('westApi'))]"
+            ],
+            "properties": {
+              "RepoUrl": "https://github.com/danielscholl/demo-appgw-path-code.git",
+              "branch": "master",
+              "IsManualIntegration": true
+            }
+          }
+        ]
+      },
+      {
+        "apiVersion": "2016-08-01",
+        "type": "Microsoft.Web/sites",
+        "name": "[variables('centralWeb')]",
+        "dependsOn": [
+            "[variables('centralPlan')]"
+        ],
+        "location": "centralus",
+        "properties": {
+            "name": "[variables('centralWeb')]",
+            "serverFarmId": "[variables('centralPlan')]"
+        },
+        "resources": [
+          {
+            "apiVersion": "2016-08-01",
+            "name": "web",
+            "type": "sourcecontrols",
+            "dependsOn": [
+              "[resourceId('Microsoft.Web/Sites', variables('centralWeb'))]"
+            ],
+            "properties": {
+              "RepoUrl": "https://github.com/danielscholl/demo-appgw-path-code.git",
+              "branch": "master",
+              "IsManualIntegration": true
+            }
+          }
+        ]
+      },
+      {
+        "apiVersion": "2016-08-01",
+        "type": "Microsoft.Web/sites",
+        "name": "[variables('centralApi')]",
+        "dependsOn": [
+            "[variables('centralPlan')]"
+        ],
+        "location": "centralus",
+        "properties": {
+            "name": "[variables('centralApi')]",
+            "serverFarmId": "[variables('centralPlan')]"
+        },
+        "resources": [
+          {
+            "apiVersion": "2016-08-01",
+            "name": "web",
+            "type": "sourcecontrols",
+            "dependsOn": [
+              "[resourceId('Microsoft.Web/Sites', variables('centralApi'))]"
+            ],
+            "properties": {
+              "RepoUrl": "https://github.com/danielscholl/demo-appgw-path-code.git",
+              "branch": "master",
+              "IsManualIntegration": true
+            }
+          }
+        ]
+      },
+      {
+        "apiVersion": "2016-08-01",
+        "type": "Microsoft.Web/sites",
+        "name": "[variables('eastWeb')]",
+        "dependsOn": [
+            "[variables('eastPlan')]"
+        ],
+        "location": "eastus",
+        "properties": {
+            "name": "[variables('eastWeb')]",
+            "serverFarmId": "[variables('eastPlan')]"
+        },
+        "resources": [
+          {
+            "apiVersion": "2016-08-01",
+            "name": "web",
+            "type": "sourcecontrols",
+            "dependsOn": [
+              "[resourceId('Microsoft.Web/Sites', variables('eastWeb'))]"
+            ],
+            "properties": {
+              "RepoUrl": "https://github.com/danielscholl/demo-appgw-path-code.git",
+              "branch": "master",
+              "IsManualIntegration": true
+            }
+          }
+        ]
+      },
+      {
+        "apiVersion": "2016-08-01",
+        "type": "Microsoft.Web/sites",
+        "name": "[variables('eastApi')]",
+        "dependsOn": [
+            "[variables('eastPlan')]"
+        ],
+        "location": "eastus",
+        "properties": {
+            "name": "[variables('eastApi')]",
+            "serverFarmId": "[variables('eastPlan')]"
+        },
+        "resources": [
+          {
+            "apiVersion": "2016-08-01",
+            "name": "web",
+            "type": "sourcecontrols",
+            "dependsOn": [
+              "[resourceId('Microsoft.Web/Sites', variables('eastApi'))]"
+            ],
+            "properties": {
+              "RepoUrl": "https://github.com/danielscholl/demo-appgw-path-code.git",
+              "branch": "master",
+              "IsManualIntegration": true
+            }
+          }
+        ]
+      },
+      {
+        "apiVersion": "2017-06-01",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[variables('westIp')]",
+        "location": "westus",
+        "properties": {
+          "publicIPAllocationMethod": "Dynamic"
+        }
+      },
+      {
+        "apiVersion": "2017-06-01",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[variables('centralIp')]",
+        "location": "centralus",
+        "properties": {
+          "publicIPAllocationMethod": "Dynamic"
+        }
+      },
+      {
+        "apiVersion": "2017-06-01",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[variables('eastIp')]",
+        "location": "eastus",
+        "properties": {
+          "publicIPAllocationMethod": "Dynamic"
+        }
+      },
+      {
+        "apiVersion": "2017-06-01",
+        "type": "Microsoft.Network/virtualNetworks",
+        "name": "[variables('westVnet')]",
+        "location": "westus",
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "192.168.1.0/24"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "default",
+              "properties": {
+                "addressPrefix": "192.168.1.0/24"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2017-06-01",
+        "type": "Microsoft.Network/virtualNetworks",
+        "name": "[variables('centralVnet')]",
+        "location": "centralus",
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "192.168.1.0/24"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "default",
+              "properties": {
+                "addressPrefix": "192.168.1.0/24"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2017-06-01",
+        "type": "Microsoft.Network/virtualNetworks",
+        "name": "[variables('eastVnet')]",
+        "location": "eastus",
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "192.168.1.0/24"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "default",
+              "properties": {
+                "addressPrefix": "192.168.1.0/24"
+              }
+            }
+          ]
+        }
+      },
+      {
+          "apiVersion": "2017-06-01",
+          "name": "[variables('westGw')]",
+          "type": "Microsoft.Network/applicationGateways",
+          "location": "westus",
+          "dependsOn": [
+            "[concat('Microsoft.Network/virtualNetworks/', variables('westVnet'))]",
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('westIp'))]"
+          ],
+          "properties": {
+            "sku": {
+              "name": "Standard_Small",
+              "tier": "Standard",
+              "capacity": 1
+            },
+            "gatewayIPConfigurations": [
+              {
+                "name": "appGatewayIpConfig",
+                "properties": {
+                  "subnet": {
+                    "id": "[variables('westSubnetId')]"
+                  }
+                }
+              }
+            ],
+            "frontendIPConfigurations": [
+              {
+                "name": "appGatewayFrontendPublicIP",
+                "properties": {
+                  "PublicIPAddress": {
+                    "id": "[variables('westIpId')]"
+                  }
+                }
+              }
+            ],
+            "frontendPorts": [
+              {
+                "name": "appGatewayFrontendPort80",
+                "properties": {
+                  "Port": 80
+                }
+              }
+            ],
+            "httpListeners": [
+              {
+                "name": "appGatewayHttpListener",
+                "properties": {
+                  "FrontendIPConfiguration": {
+                    "Id": "[concat(variables('westGwId'), '/frontendIPConfigurations/appGatewayFrontendPublicIP')]"
+                  },
+                  "FrontendPort": {
+                    "Id": "[concat(variables('westGwId'), '/frontendPorts/appGatewayFrontendPort80')]"
+                  },
+                  "Protocol": "Http",
+                  "SslCertificate": null
+                }
+              }
+            ],
+            "probes": [
+              {
+                  "Name": "probe-web",
+                  "properties": {
+                      "Protocol": "Http",
+                      "Path": "/keepalive.html",
+                      "Interval": 30,
+                      "Timeout": 10,
+                      "UnhealthyThreshold": 3,
+                      "MinServers": 0,
+                      "PickHostNameFromBackendHttpSettings": true
+                  }
+              },
+              {
+                  "Name": "probe-api",
+                  "properties": {
+                      "Protocol": "Http",
+                      "Path": "/keepalive.html",
+                      "Interval": 30,
+                      "Timeout": 10,
+                      "UnhealthyThreshold": 3,
+                      "MinServers": 0,
+                      "PickHostNameFromBackendHttpSettings": true
+                  }
+                }
+            ],
+            "backendHttpSettingsCollection": [
+              {
+                  "name": "httpsettings-web",
+                  "properties": {
+                      "Port": 80,
+                      "Protocol": "Http",
+                      "CookieBasedAffinity": "Disabled",
+                      "PickHostNameFromBackendAddress": true,
+                      "ProbeEnabled": "true",
+                      "Probe": {
+                          "id": "[concat(variables('westGwId'), '/probes/probe-web')]"
+                      }
+                  }
+              },
+              {
+                  "name": "httpsettings-api",
+                  "properties": {
+                      "Port": 80,
+                      "Protocol": "Http",
+                      "CookieBasedAffinity": "Disabled",
+                      "PickHostNameFromBackendAddress": true,
+                      "ProbeEnabled": "true",
+                      "Probe": {
+                          "id": "[concat(variables('westGwId'), '/probes/probe-api')]"
+                      }
+                  }
+              }
+            ],
+            "backendAddressPools": [
+              {
+                  "name": "pool-web",
+                  "properties": {
+                      "BackendAddresses": [
+                          {
+                              "IpAddress": "[concat(variables('westWeb'), '.azurewebsites.net')]"
+                          }
+                      ]
+                  }
+              },
+              {
+                  "name": "pool-api",
+                  "properties": {
+                      "BackendAddresses": [
+                          {
+                              "IpAddress": "[concat(variables('westApi'), '.azurewebsites.net')]"
+                          }
+                      ]
+                  }
+              }
+            ],
+            "urlPathMaps": [
+              {
+                "name": "pathmap",
+                "properties": {
+                  "defaultBackendAddressPool": {
+                    "id": "[concat(variables('westGwId'), '/backendAddressPools/pool-web')]"
+                  },
+                  "defaultBackendHttpSettings": {
+                    "id": "[concat(variables('westGwId'), '/backendHttpSettingsCollection/httpsettings-web')]"
+                  },
+                  "pathRules": [
+                    {
+                      "name": "api-path",
+                      "properties": {
+                        "paths": [
+                          "/api/*"
+                        ],
+                        "backendAddressPool": {
+                          "id": "[concat(variables('westGwId'), '/backendAddressPools/pool-api')]"
+                        },
+                        "backendHttpSettings": {
+                          "id": "[concat(variables('westGwId'), '/backendHttpSettingsCollection/httpsettings-api')]"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "requestRoutingRules": [
+              {
+                "Name": "rule",
+                "properties": {
+                  "RuleType": "PathBasedRouting",
+                  "httpListener": {
+                    "id": "[concat(variables('westGwId'), '/httpListeners/appGatewayHttpListener')]"
+                  },
+                  "urlPathMap": {
+                    "id": "[concat(variables('westGwId'), '/urlPathMaps/pathmap')]"
+                  }
+                }
+              }
+            ]
+          }
+      },
+      {
+        "apiVersion": "2017-06-01",
+        "name": "[variables('centralGw')]",
+        "type": "Microsoft.Network/applicationGateways",
+        "location": "centralus",
+        "dependsOn": [
+          "[concat('Microsoft.Network/virtualNetworks/', variables('centralVnet'))]",
+          "[concat('Microsoft.Network/publicIPAddresses/', variables('centralIp'))]"
+        ],
+        "properties": {
+          "sku": {
+            "name": "Standard_Small",
+            "tier": "Standard",
+            "capacity": 1
+          },
+          "gatewayIPConfigurations": [
+            {
+              "name": "appGatewayIpConfig",
+              "properties": {
+                "subnet": {
+                  "id": "[variables('centralSubnetId')]"
+                }
+              }
+            }
+          ],
+          "frontendIPConfigurations": [
+            {
+              "name": "appGatewayFrontendPublicIP",
+              "properties": {
+                "PublicIPAddress": {
+                  "id": "[variables('centralIpId')]"
+                }
+              }
+            }
+          ],
+          "frontendPorts": [
+            {
+              "name": "appGatewayFrontendPort80",
+              "properties": {
+                "Port": 80
+              }
+            }
+          ],
+          "httpListeners": [
+            {
+              "name": "appGatewayHttpListener",
+              "properties": {
+                "FrontendIPConfiguration": {
+                  "Id": "[concat(variables('centralGwId'), '/frontendIPConfigurations/appGatewayFrontendPublicIP')]"
+                },
+                "FrontendPort": {
+                  "Id": "[concat(variables('centralGwId'), '/frontendPorts/appGatewayFrontendPort80')]"
+                },
+                "Protocol": "Http",
+                "SslCertificate": null
+              }
+            }
+          ],
+          "probes": [
+            {
+                "Name": "probe-web",
+                "properties": {
+                    "Protocol": "Http",
+                    "Path": "/keepalive.html",
+                    "Interval": 30,
+                    "Timeout": 10,
+                    "UnhealthyThreshold": 3,
+                    "MinServers": 0,
+                    "PickHostNameFromBackendHttpSettings": true
+                }
+            },
+            {
+                "Name": "probe-api",
+                "properties": {
+                    "Protocol": "Http",
+                    "Path": "/keepalive.html",
+                    "Interval": 30,
+                    "Timeout": 10,
+                    "UnhealthyThreshold": 3,
+                    "MinServers": 0,
+                    "PickHostNameFromBackendHttpSettings": true
+                }
+              }
+          ],
+          "backendHttpSettingsCollection": [
+            {
+                "name": "httpsettings-web",
+                "properties": {
+                    "Port": 80,
+                    "Protocol": "Http",
+                    "CookieBasedAffinity": "Disabled",
+                    "PickHostNameFromBackendAddress": true,
+                    "ProbeEnabled": "true",
+                    "Probe": {
+                        "id": "[concat(variables('centralGwId'), '/probes/probe-web')]"
+                    }
+                }
+            },
+            {
+                "name": "httpsettings-api",
+                "properties": {
+                    "Port": 80,
+                    "Protocol": "Http",
+                    "CookieBasedAffinity": "Disabled",
+                    "PickHostNameFromBackendAddress": true,
+                    "ProbeEnabled": "true",
+                    "Probe": {
+                        "id": "[concat(variables('centralGwId'), '/probes/probe-api')]"
+                    }
+                }
+            }
+          ],
+          "backendAddressPools": [
+            {
+                "name": "pool-web",
+                "properties": {
+                    "BackendAddresses": [
+                        {
+                            "IpAddress": "[concat(variables('centralWeb'), '.azurewebsites.net')]"
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "pool-api",
+                "properties": {
+                    "BackendAddresses": [
+                        {
+                            "IpAddress": "[concat(variables('centralApi'), '.azurewebsites.net')]"
+                        }
+                    ]
+                }
+            }
+          ],
+          "urlPathMaps": [
+            {
+              "name": "pathmap",
+              "properties": {
+                "defaultBackendAddressPool": {
+                  "id": "[concat(variables('centralGwId'), '/backendAddressPools/pool-web')]"
+                },
+                "defaultBackendHttpSettings": {
+                  "id": "[concat(variables('centralGwId'), '/backendHttpSettingsCollection/httpsettings-web')]"
+                },
+                "pathRules": [
+                  {
+                    "name": "api-path",
+                    "properties": {
+                      "paths": [
+                        "/api/*"
+                      ],
+                      "backendAddressPool": {
+                        "id": "[concat(variables('centralGwId'), '/backendAddressPools/pool-api')]"
+                      },
+                      "backendHttpSettings": {
+                        "id": "[concat(variables('centralGwId'), '/backendHttpSettingsCollection/httpsettings-api')]"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "requestRoutingRules": [
+            {
+              "Name": "rule",
+              "properties": {
+                "RuleType": "PathBasedRouting",
+                "httpListener": {
+                  "id": "[concat(variables('centralGwId'), '/httpListeners/appGatewayHttpListener')]"
+                },
+                "urlPathMap": {
+                  "id": "[concat(variables('centralGwId'), '/urlPathMaps/pathmap')]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2017-06-01",
+        "name": "[variables('eastGw')]",
+        "type": "Microsoft.Network/applicationGateways",
+        "location": "eastus",
+        "dependsOn": [
+          "[concat('Microsoft.Network/virtualNetworks/', variables('eastVnet'))]",
+          "[concat('Microsoft.Network/publicIPAddresses/', variables('eastIp'))]"
+        ],
+        "properties": {
+          "sku": {
+            "name": "Standard_Small",
+            "tier": "Standard",
+            "capacity": 1
+          },
+          "gatewayIPConfigurations": [
+            {
+              "name": "appGatewayIpConfig",
+              "properties": {
+                "subnet": {
+                  "id": "[variables('eastSubnetId')]"
+                }
+              }
+            }
+          ],
+          "frontendIPConfigurations": [
+            {
+              "name": "appGatewayFrontendPublicIP",
+              "properties": {
+                "PublicIPAddress": {
+                  "id": "[variables('eastIpId')]"
+                }
+              }
+            }
+          ],
+          "frontendPorts": [
+            {
+              "name": "appGatewayFrontendPort80",
+              "properties": {
+                "Port": 80
+              }
+            }
+          ],
+          "httpListeners": [
+            {
+              "name": "appGatewayHttpListener",
+              "properties": {
+                "FrontendIPConfiguration": {
+                  "Id": "[concat(variables('eastGwId'), '/frontendIPConfigurations/appGatewayFrontendPublicIP')]"
+                },
+                "FrontendPort": {
+                  "Id": "[concat(variables('eastGwId'), '/frontendPorts/appGatewayFrontendPort80')]"
+                },
+                "Protocol": "Http",
+                "SslCertificate": null
+              }
+            }
+          ],
+          "probes": [
+            {
+                "Name": "probe-web",
+                "properties": {
+                    "Protocol": "Http",
+                    "Path": "/keepalive.html",
+                    "Interval": 30,
+                    "Timeout": 10,
+                    "UnhealthyThreshold": 3,
+                    "MinServers": 0,
+                    "PickHostNameFromBackendHttpSettings": true
+                }
+            },
+            {
+                "Name": "probe-api",
+                "properties": {
+                    "Protocol": "Http",
+                    "Path": "/keepalive.html",
+                    "Interval": 30,
+                    "Timeout": 10,
+                    "UnhealthyThreshold": 3,
+                    "MinServers": 0,
+                    "PickHostNameFromBackendHttpSettings": true
+                }
+              }
+          ],
+          "backendHttpSettingsCollection": [
+            {
+                "name": "httpsettings-web",
+                "properties": {
+                    "Port": 80,
+                    "Protocol": "Http",
+                    "CookieBasedAffinity": "Disabled",
+                    "PickHostNameFromBackendAddress": true,
+                    "ProbeEnabled": "true",
+                    "Probe": {
+                        "id": "[concat(variables('eastGwId'), '/probes/probe-web')]"
+                    }
+                }
+            },
+            {
+                "name": "httpsettings-api",
+                "properties": {
+                    "Port": 80,
+                    "Protocol": "Http",
+                    "CookieBasedAffinity": "Disabled",
+                    "PickHostNameFromBackendAddress": true,
+                    "ProbeEnabled": "true",
+                    "Probe": {
+                        "id": "[concat(variables('eastGwId'), '/probes/probe-api')]"
+                    }
+                }
+            }
+          ],
+          "backendAddressPools": [
+            {
+                "name": "pool-web",
+                "properties": {
+                    "BackendAddresses": [
+                        {
+                            "IpAddress": "[concat(variables('eastWeb'), '.azurewebsites.net')]"
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "pool-api",
+                "properties": {
+                    "BackendAddresses": [
+                        {
+                            "IpAddress": "[concat(variables('eastApi'), '.azurewebsites.net')]"
+                        }
+                    ]
+                }
+            }
+          ],
+          "urlPathMaps": [
+            {
+              "name": "pathmap",
+              "properties": {
+                "defaultBackendAddressPool": {
+                  "id": "[concat(variables('eastGwId'), '/backendAddressPools/pool-web')]"
+                },
+                "defaultBackendHttpSettings": {
+                  "id": "[concat(variables('eastGwId'), '/backendHttpSettingsCollection/httpsettings-web')]"
+                },
+                "pathRules": [
+                  {
+                    "name": "api-path",
+                    "properties": {
+                      "paths": [
+                        "/api/*"
+                      ],
+                      "backendAddressPool": {
+                        "id": "[concat(variables('eastGwId'), '/backendAddressPools/pool-api')]"
+                      },
+                      "backendHttpSettings": {
+                        "id": "[concat(variables('eastGwId'), '/backendHttpSettingsCollection/httpsettings-api')]"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "requestRoutingRules": [
+            {
+              "Name": "rule",
+              "properties": {
+                "RuleType": "PathBasedRouting",
+                "httpListener": {
+                  "id": "[concat(variables('eastGwId'), '/httpListeners/appGatewayHttpListener')]"
+                },
+                "urlPathMap": {
+                  "id": "[concat(variables('eastGwId'), '/urlPathMaps/pathmap')]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "outputs": {}
+}
