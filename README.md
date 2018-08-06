@@ -1,9 +1,9 @@
-# Demo Application Gateway Multipath
+# Proof of Concept - Application Gateway using Multipath
 
-In this demo, you will implement three different locations for a website and use a Traffic Manager to route traffic to the locations. 
+This proof of concept implements a 3 region multi path website controlled by Traffic Manager to route traffic to the proper location. 
 
 __Deploy the Demo:__
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdanielscholl%2Fdemo-appgateway-multipath%2Fmaster%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdanielscholl%2Fpoc-applicationgateway-multipath%2Fmaster%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
