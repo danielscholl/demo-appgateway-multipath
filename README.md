@@ -8,6 +8,9 @@ Includes a template and links web deployment to github.
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
+![[0]][0]
+_Architecture Diagram_
+
 __Manually Deploy the Solution:__
 
 ```powershell
@@ -23,3 +26,5 @@ New-AzureRmResourceGroupDeployment -Name appgw-path-demo `
   -TemplateFile azuredeploy.json `
   -ResourceGroupName demo
 ```
+
+[0]: ./images/architecture.png "Architecture Diagram"

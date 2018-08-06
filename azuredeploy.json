@@ -34,11 +34,11 @@
       "eastVnet": "[concat(parameters('prefix'), '-vnet-east')]",
       "eastSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('eastVnet'), 'default')]",
       "westGw": "[concat(parameters('prefix'), '-gw-west')]",
-      "westGwId": "[resourceId('Microsoft.Network/applicationGateways',variables('westGw'))]",
+      "westGwId": "[resourceId('Microsoft.Network/applicationGateways', variables('westGw'))]",
       "centralGw": "[concat(parameters('prefix'), '-gw-central')]",
-      "centralGwId": "[resourceId('Microsoft.Network/applicationGateways',variables('centralGw'))]",
+      "centralGwId": "[resourceId('Microsoft.Network/applicationGateways', variables('centralGw'))]",
       "eastGw": "[concat(parameters('prefix'), '-gw-east')]",
-      "eastGwId": "[resourceId('Microsoft.Network/applicationGateways',variables('eastGw'))]",
+      "eastGwId": "[resourceId('Microsoft.Network/applicationGateways', variables('eastGw'))]",
       "trafficMgr": "[concat(parameters('prefix'), '-trafficmanager')]"
     },
     "resources": [
@@ -973,13 +973,16 @@
         }
       },
       {
-        "apiVersion": "2015-11-01",
+        "apiVersion": "2017-05-01",
         "type": "Microsoft.Network/trafficManagerProfiles",
         "name": "[variables('trafficMgr')]",
         "location": "global",
+        "dependsOn": [
+
+        ],
         "properties": {
           "profileStatus": "Enabled",
-          "trafficRoutingMethod": "Priority",
+          "trafficRoutingMethod": "Performance",
           "dnsConfig": {
             "relativeName": "[variables('trafficMgr')]",
             "ttl": 30
@@ -994,7 +997,7 @@
               "name": "[concat(variables('trafficMgr'),'-endpoint-west')]",
               "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
               "properties": {
-                "targetResourceId": "[resourceId('Microsoft.Web/sites/', variables('westWeb'))]",
+                "targetResourceId": "[variables('westIpId')]",
                 "endpointStatus": "Enabled"
               }
             },
@@ -1002,7 +1005,7 @@
               "name": "[concat(variables('trafficMgr'),'-endpoint-central')]",
               "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
               "properties": {
-                "targetResourceId": "[resourceId('Microsoft.Web/sites/', variables('centralWeb'))]",
+                "targetResourceId": "[variables('centralIpId')]",
                 "endpointStatus": "Enabled"
               }
             },
@@ -1010,7 +1013,7 @@
               "name": "[concat(variables('trafficMgr'),'-endpoint-east')]",
               "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
               "properties": {
-                "targetResourceId": "[resourceId('Microsoft.Web/sites/', variables('easttWeb'))]",
+                "targetResourceId": "[variables('centralIpId')]",
                 "endpointStatus": "Enabled"
               }
             }
