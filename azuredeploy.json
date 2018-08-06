@@ -177,6 +177,23 @@
               "branch": "master",
               "IsManualIntegration": true
             }
+          },
+          {
+            "apiVersion": "2016-08-01",
+            "name": "logs",
+            "type": "config",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites', variables('westWeb'))]"
+            ],
+            "properties": {
+              "httpLogs": {
+                "fileSystem": {
+                  "retentionInMb": 100,
+                  "retentionInDays": 90,
+                  "enabled": true
+                }
+              }
+            }
           }
         ]
       },
@@ -204,6 +221,23 @@
               "RepoUrl": "https://github.com/danielscholl/demo-appgw-path-code.git",
               "branch": "master",
               "IsManualIntegration": true
+            }
+          },
+          {
+            "apiVersion": "2016-08-01",
+            "name": "logs",
+            "type": "config",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites', variables('westApi'))]"
+            ],
+            "properties": {
+              "httpLogs": {
+                "fileSystem": {
+                  "retentionInMb": 100,
+                  "retentionInDays": 90,
+                  "enabled": true
+                }
+              }
             }
           }
         ]
@@ -233,6 +267,23 @@
               "branch": "master",
               "IsManualIntegration": true
             }
+          },
+          {
+            "apiVersion": "2016-08-01",
+            "name": "logs",
+            "type": "config",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites', variables('centralWeb'))]"
+            ],
+            "properties": {
+              "httpLogs": {
+                "fileSystem": {
+                  "retentionInMb": 100,
+                  "retentionInDays": 90,
+                  "enabled": true
+                }
+              }
+            }
           }
         ]
       },
@@ -260,6 +311,23 @@
               "RepoUrl": "https://github.com/danielscholl/demo-appgw-path-code.git",
               "branch": "master",
               "IsManualIntegration": true
+            }
+          },
+          {
+            "apiVersion": "2016-08-01",
+            "name": "logs",
+            "type": "config",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites', variables('centralApi'))]"
+            ],
+            "properties": {
+              "httpLogs": {
+                "fileSystem": {
+                  "retentionInMb": 100,
+                  "retentionInDays": 90,
+                  "enabled": true
+                }
+              }
             }
           }
         ]
@@ -289,6 +357,23 @@
               "branch": "master",
               "IsManualIntegration": true
             }
+          },
+          {
+            "apiVersion": "2016-08-01",
+            "name": "logs",
+            "type": "config",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites', variables('eastWeb'))]"
+            ],
+            "properties": {
+              "httpLogs": {
+                "fileSystem": {
+                  "retentionInMb": 100,
+                  "retentionInDays": 90,
+                  "enabled": true
+                }
+              }
+            }
           }
         ]
       },
@@ -316,6 +401,23 @@
               "RepoUrl": "https://github.com/danielscholl/demo-appgw-path-code.git",
               "branch": "master",
               "IsManualIntegration": true
+            }
+          },
+          {
+            "apiVersion": "2016-08-01",
+            "name": "logs",
+            "type": "config",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites', variables('eastApi'))]"
+            ],
+            "properties": {
+              "httpLogs": {
+                "fileSystem": {
+                  "retentionInMb": 100,
+                  "retentionInDays": 90,
+                  "enabled": true
+                }
+              }
             }
           }
         ]
