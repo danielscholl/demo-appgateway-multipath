@@ -12,9 +12,6 @@
       }
     },
     "variables": {
-      "westStorage": "[concat(parameters('prefix'), 'diagwest')]",
-      "centralStorage": "[concat(parameters('prefix'), 'diagcentral')]",
-      "eastStorage": "[concat(parameters('prefix'), 'diageast')]",
       "westPlan": "[concat(parameters('prefix'), '-plan-west')]",
       "centralPlan": "[concat(parameters('prefix'), '-plan-central')]",
       "eastPlan": "[concat(parameters('prefix'), '-plan-east')]",     
@@ -41,84 +38,10 @@
       "centralGw": "[concat(parameters('prefix'), '-gw-central')]",
       "centralGwId": "[resourceId('Microsoft.Network/applicationGateways',variables('centralGw'))]",
       "eastGw": "[concat(parameters('prefix'), '-gw-east')]",
-      "eastGwId": "[resourceId('Microsoft.Network/applicationGateways',variables('eastGw'))]"
+      "eastGwId": "[resourceId('Microsoft.Network/applicationGateways',variables('eastGw'))]",
+      "trafficMgr": "[concat(parameters('prefix'), '-trafficmanager')]"
     },
     "resources": [
-      {
-        "apiVersion": "2018-03-01-preview",
-        "name": "[variables('westStorage')]",
-        "type": "Microsoft.Storage/storageAccounts",
-        "location": "westus",
-        "tags": {
-          "displayName": "Storage Account"
-        },
-        "kind": "StorageV2",
-        "sku": {
-          "name": "Standard_LRS",
-          "tier": "Standard"
-        },
-        "properties": {
-          "encryption": {
-            "keySource": "Microsoft.Storage",
-            "services": {
-              "blob": {
-                "enabled": true
-              }
-            }
-          },
-          "accessTier": "Hot"
-        }
-      },
-      {
-        "apiVersion": "2018-03-01-preview",
-        "name": "[variables('centralStorage')]",
-        "type": "Microsoft.Storage/storageAccounts",
-        "location": "centralus",
-        "tags": {
-          "displayName": "Storage Account"
-        },
-        "kind": "StorageV2",
-        "sku": {
-          "name": "Standard_LRS",
-          "tier": "Standard"
-        },
-        "properties": {
-          "encryption": {
-            "keySource": "Microsoft.Storage",
-            "services": {
-              "blob": {
-                "enabled": true
-              }
-            }
-          },
-          "accessTier": "Hot"
-        }
-      },
-      {
-        "apiVersion": "2018-03-01-preview",
-        "name": "[variables('eastStorage')]",
-        "type": "Microsoft.Storage/storageAccounts",
-        "location": "eastus",
-        "tags": {
-          "displayName": "Storage Account"
-        },
-        "kind": "StorageV2",
-        "sku": {
-          "name": "Standard_LRS",
-          "tier": "Standard"
-        },
-        "properties": {
-          "encryption": {
-            "keySource": "Microsoft.Storage",
-            "services": {
-              "blob": {
-                "enabled": true
-              }
-            }
-          },
-          "accessTier": "Hot"
-        }
-      },
       {
         "apiVersion": "2016-09-01",
         "name": "[variables('westPlan')]",
@@ -1047,6 +970,51 @@
               }
             }
           ]
+        }
+      },
+      {
+        "apiVersion": "2015-11-01",
+        "type": "Microsoft.Network/trafficManagerProfiles",
+        "name": "[variables('trafficMgr')]",
+        "location": "global",
+        "properties": {
+          "profileStatus": "Enabled",
+          "trafficRoutingMethod": "Priority",
+          "dnsConfig": {
+            "relativeName": "[variables('trafficMgr')]",
+            "ttl": 30
+          },
+          "monitorConfig": {
+            "protocol": "HTTP",
+            "port": 80,
+            "path": "/"
+          },
+          "endpoints": [
+            {
+              "name": "[concat(variables('trafficMgr'),'-endpoint-west')]",
+              "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+              "properties": {
+                "targetResourceId": "[resourceId('Microsoft.Web/sites/', variables('westWeb'))]",
+                "endpointStatus": "Enabled"
+              }
+            },
+            {
+              "name": "[concat(variables('trafficMgr'),'-endpoint-central')]",
+              "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+              "properties": {
+                "targetResourceId": "[resourceId('Microsoft.Web/sites/', variables('centralWeb'))]",
+                "endpointStatus": "Enabled"
+              }
+            },
+            {
+              "name": "[concat(variables('trafficMgr'),'-endpoint-east')]",
+              "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+              "properties": {
+                "targetResourceId": "[resourceId('Microsoft.Web/sites/', variables('easttWeb'))]",
+                "endpointStatus": "Enabled"
+              }
+            }
+          ]      
         }
       }
     ],
